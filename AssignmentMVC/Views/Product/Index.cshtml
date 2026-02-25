@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "Product Management";
+}
+
+<h2>Product Management</h2>
+
+<div class="card p-3 mb-3">
+    <input type="hidden" id="Id" />
+
+    <div class="row">
+        <div class="col-md-3">
+            <input type="text" id="Name" class="form-control" placeholder="Product Name" />
+        </div>
+        <div class="col-md-3">
+            <input type="number" id="Price" class="form-control" placeholder="Price" />
+        </div>
+        <div class="col-md-3">
+            <input type="number" id="Quantity" class="form-control" placeholder="Quantity" />
+        </div>
+        <div class="col-md-3">
+            <button class="btn btn-primary" onclick="saveProduct()">Save</button>
+            <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+        </div>
+    </div>
+</div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Total</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody id="productTable">
+    </tbody>
+</table>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+            loadProducts();
+        });
+
+        function loadProducts() {
+            $.get("/Product/GetAll", function (data) {
+
+                let rows = "";
+                $.each(data, function (i, item) {
+                    rows += `<tr>
+                                <td>${item.name}</td>
+                                <td>${item.price}</td>
+                                <td>${item.quantity}</td>
+                                <td>${item.price * item.quantity}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick='editProduct(${JSON.stringify(item)})'>Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick='deleteProduct(${item.id})'>Delete</button>
+                                </td>
+                             </tr>`;
+                });
+
+                $("#productTable").html(rows);
+            });
+        }
+
+        function saveProduct() {
+
+            let product = {
+                Id: $("#Id").val(),
+                Name: $("#Name").val(),
+                Price: $("#Price").val(),
+                Quantity: $("#Quantity").val()
+            };
+
+                    $.post("/Product/Save", product, function (response) {
+
+            if (response.success) {
+                loadProducts();
+                clearForm();
+            } else {
+                alert(response.message);
+            }
+
+        });
+        }
+
+        function editProduct(product) {
+            $("#Id").val(product.id);
+            $("#Name").val(product.name);
+            $("#Price").val(product.price);
+            $("#Quantity").val(product.quantity);
+        }
+
+        function deleteProduct(id) {
+            if (confirm("Are you sure?")) {
+                $.post("/Product/Delete", { id: id }, function () {
+                    loadProducts();
+                });
+            }
+        }
+
+        function clearForm() {
+            $("#Id").val(0);
+            $("#Name").val("");
+            $("#Price").val("");
+            $("#Quantity").val("");
+        }
+
+    </script>
+}
